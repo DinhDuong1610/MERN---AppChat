@@ -1,18 +1,19 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import type { MessageType } from "@/types/chat.type";
 import AvatarWithBadge from "../avatar-with-badge";
 import { formatChatTime } from "@/lib/helper";
 import { Button } from "../ui/button";
-import { ReplyIcon } from "lucide-react";
-
+import { Eye, EyeOff, ReplyIcon, AlertTriangle } from "lucide-react";
 interface Props {
   message: MessageType;
   onReply: (message: MessageType) => void;
 }
 const ChatMessageBody = memo(({ message, onReply }: Props) => {
   const { user } = useAuth();
+
+  const [isRevealed, setIsRevealed] = useState(!message.isToxic);
 
   const userId = user?._id || null;
   const isCurrentUser = message.sender?._id === userId;
@@ -90,17 +91,50 @@ const ChatMessageBody = memo(({ message, onReply }: Props) => {
             )}
 
             {message?.image && (
-              <img
-                src={message?.image || ""}
-                alt=""
-                className="rounded-lg max-w-xs"
-              />
+              <div className="relative mb-2">
+                <img
+                  src={message?.image || ""}
+                  alt="attachment"
+                  className={cn(
+                    "rounded-lg max-w-xs transition-all duration-300",
+                    message.isToxic && !isRevealed ? "blur-md brightness-50" : ""
+                  )}
+                />
+
+                {message.isToxic && !isRevealed && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center p-2 text-center">
+                    <AlertTriangle className="text-yellow-500 w-8 h-8 mb-1" />
+                    <p className="text-xs font-bold text-white drop-shadow-md mb-2">
+                      Sensitive Content
+                    </p>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      className="h-7 text-xs bg-white/20 hover:bg-white/40 text-white backdrop-blur-sm border border-white/30"
+                      onClick={() => setIsRevealed(true)}
+                    >
+                      <Eye className="w-3 h-3 mr-1" /> View Photo
+                    </Button>
+                  </div>
+                )}
+
+                {message.isToxic && isRevealed && (
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="absolute top-2 right-2 h-6 w-6 bg-black/50 hover:bg-black/70 text-white rounded-full"
+                    onClick={() => setIsRevealed(false)}
+                    title="Hide content"
+                  >
+                    <EyeOff className="w-3 h-3" />
+                  </Button>
+                )}
+              </div>
             )}
 
             {message.content && <p>{message.content}</p>}
           </div>
 
-          {/* {Reply Icon Button} */}
           <Button
             variant="outline"
             size="icon"

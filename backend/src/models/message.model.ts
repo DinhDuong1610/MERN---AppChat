@@ -5,6 +5,7 @@ export interface MessageDocument extends Document {
   sender: mongoose.Types.ObjectId;
   content?: string;
   image?: string;
+  isToxic?: boolean;
   replyTo?: mongoose.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
@@ -19,6 +20,7 @@ const messageSchema = new Schema<MessageDocument>(
     },
     content: { type: String },
     image: { type: String },
+    isToxic: { type: Boolean, default: false },
     sender: {
       type: Schema.Types.ObjectId,
       ref: "User",

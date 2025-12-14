@@ -16,6 +16,7 @@ export type MessageType = {
   _id: string;
   content: string | null;
   image: string | null;
+  isToxic?: boolean;
   sender: UserType | null;
   replyTo: MessageType | null;
   chatId: string;

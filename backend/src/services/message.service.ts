@@ -9,6 +9,30 @@ import {
   emitNewMessageToChatRoom,
 } from "../lib/socket";
 import UserModel from "../models/user.model";
+import axios from "axios";
+import FormData from "form-data";
+
+const checkToxicImage = async (imageUrl: string): Promise<boolean> => {
+  try {
+    const response = await axios.get(imageUrl, { responseType: "arraybuffer" });
+    const buffer = Buffer.from(response.data, "binary");
+
+    const formData = new FormData();
+    formData.append("file", buffer, { filename: "image.jpg" });
+
+    const pythonApiUrl = "http://localhost:8000/predict";
+    const result = await axios.post(pythonApiUrl, formData, {
+      headers: {
+        ...formData.getHeaders(),
+      },
+    });
+
+    return result.data.is_toxic;
+  } catch (error) {
+    console.error("Error checking toxic image:", error);
+    return false;
+  }
+};
 
 
 export const sendMessageService = async (
@@ -39,11 +63,14 @@ export const sendMessageService = async (
   }
 
   let imageUrl;
+  let isToxic = false;
 
   if (image) {
     //upload the image to cloudinary
     const uploadRes = await cloudinary.uploader.upload(image);
     imageUrl = uploadRes.secure_url;
+
+    isToxic = await checkToxicImage(imageUrl);
   }
 
   const newMessage = await MessageModel.create({
@@ -51,6 +78,7 @@ export const sendMessageService = async (
     sender: userId,
     content,
     image: imageUrl,
+    isToxic: isToxic,
     replyTo: replyToId || null,
   });
 
@@ -69,10 +97,8 @@ export const sendMessageService = async (
   chat.lastMessage = newMessage._id as mongoose.Types.ObjectId;
   await chat.save();
 
-  //websocket emit the new Message to the chat room
   emitNewMessageToChatRoom(userId, chatId, newMessage);
 
-  //websocket emit the lastmessage to members (personnal room user)
   const allParticipantIds = chat.participants.map((id) => id.toString());
   emitLastMessageToParticipants(allParticipantIds, chatId, newMessage);
 
