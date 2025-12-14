@@ -4,6 +4,9 @@ import type { ChatType } from "@/types/chat.type";
 import { ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AvatarWithBadge from "../avatar-with-badge";
+import { useVideoCall } from "@/hooks/use-video-call";
+import { Video } from "lucide-react";
+import { Button } from "../ui/button";
 
 interface Props {
   chat: ChatType;
@@ -11,10 +14,19 @@ interface Props {
 }
 const ChatHeader = ({ chat, currentUserId }: Props) => {
   const navigate = useNavigate();
+  const { startCall } = useVideoCall();
   const { name, subheading, avatar, isOnline, isGroup } = getOtherUserAndGroup(
     chat,
     currentUserId
   );
+
+  const otherParticipant = chat.participants.find(p => p._id !== currentUserId);
+
+  const handleCall = () => {
+    if (otherParticipant) {
+      startCall(otherParticipant._id, otherParticipant.name);
+    }
+  };
 
   return (
     <div
@@ -42,9 +54,8 @@ const ChatHeader = ({ chat, currentUserId }: Props) => {
         <div className="ml-2">
           <h5 className="font-semibold">{name}</h5>
           <p
-            className={`text-sm ${
-              isOnline ? "text-green-500" : "text-muted-foreground"
-            }`}
+            className={`text-sm ${isOnline ? "text-green-500" : "text-muted-foreground"
+              }`}
           >
             {subheading}
           </p>
@@ -62,6 +73,18 @@ const ChatHeader = ({ chat, currentUserId }: Props) => {
         >
           Chat
         </div>
+      </div>
+      <div className="ml-auto flex items-center gap-2">
+        {!isGroup && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleCall}
+            title="Video Call"
+          >
+            <Video className="w-5 h-5 text-muted-foreground" />
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -90,6 +90,37 @@ export const initializeSocket = (httpServer: HTTPServer) => {
       }
     });
 
+
+
+    socket.on("call:start", (data: { recipientId: string; senderName: string; peerId: string }) => {
+      const recipientSocketId = onlineUsers.get(data.recipientId);
+
+      if (recipientSocketId) {
+        io?.to(recipientSocketId).emit("call:incoming", {
+          senderId: userId,
+          senderName: data.senderName,
+          peerId: data.peerId,
+        });
+      }
+    });
+
+    socket.on("call:accept", (data: { callerId: string; peerId: string }) => {
+      const callerSocketId = onlineUsers.get(data.callerId);
+      if (callerSocketId) {
+        io?.to(callerSocketId).emit("call:accepted", {
+          peerId: data.peerId,
+        });
+      }
+    });
+
+    socket.on("call:end", (data: { otherUserId: string }) => {
+      const otherSocketId = onlineUsers.get(data.otherUserId);
+      if (otherSocketId) {
+        io?.to(otherSocketId).emit("call:ended");
+      }
+    });
+
+
     socket.on("disconnect", () => {
       if (onlineUsers.get(userId) === newSocketId) {
         if (userId) onlineUsers.delete(userId);

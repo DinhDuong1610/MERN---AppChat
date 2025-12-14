@@ -3,11 +3,15 @@ import ChatList from "@/components/chat/chat-list";
 import useChatId from "@/hooks/use-chat-id";
 import { cn } from "@/lib/utils";
 import { Outlet } from "react-router-dom";
+import VideoCallModal from "@/components/chat/video-call-modal"; // Import mới
+import IncomingCall from "@/components/chat/incoming-call";     // Import mới
 
 const AppLayout = () => {
   const chatId = useChatId();
   return (
     <AppWrapper>
+      <IncomingCall />
+      <VideoCallModal />
       <div className="h-full">
         {/* ChatList */}
         <div className={cn(chatId ? "hidden lg:block" : "block")}>
